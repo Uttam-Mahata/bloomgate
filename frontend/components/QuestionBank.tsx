@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { questionsApi, Question } from '@/lib/api';
 import {
   Plus,
@@ -59,11 +59,7 @@ export default function QuestionBank() {
     subject: '',
   });
 
-  useEffect(() => {
-    loadQuestions();
-  }, [filters]);
-
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     try {
       setLoading(true);
       const filterParams: Record<string, string> = {};
@@ -78,7 +74,11 @@ export default function QuestionBank() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

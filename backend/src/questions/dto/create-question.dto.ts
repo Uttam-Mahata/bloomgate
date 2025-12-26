@@ -1,4 +1,8 @@
-import { QuestionComplexity, QuestionType, QuestionOption } from '../entities/question.entity';
+import {
+  QuestionComplexity,
+  QuestionType,
+  QuestionOption,
+} from '../entities/question.entity';
 
 export class CreateQuestionDto {
   text: string;
@@ -43,4 +47,3 @@ export class FilterQuestionsDto {
 export class BulkImportDto {
   questions: CreateQuestionDto[];
 }
-

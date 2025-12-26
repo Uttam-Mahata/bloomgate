@@ -1,6 +1,22 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Exam, ExamStatus, ExamSection, ExamModification, College } from './entities/exam.entity';
-import { CreateExamDto, UpdateExamDto, GenerateExamDto, CreateCollegeDto, ModifyDistributedExamDto } from './dto/create-exam.dto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  Exam,
+  ExamStatus,
+  ExamSection,
+  ExamModification,
+  College,
+} from './entities/exam.entity';
+import {
+  CreateExamDto,
+  UpdateExamDto,
+  GenerateExamDto,
+  CreateCollegeDto,
+  ModifyDistributedExamDto,
+} from './dto/create-exam.dto';
 import { QuestionsService } from '../questions/questions.service';
 import { BloomFilterService } from '../bloom-filter/bloom-filter.service';
 import { QuestionComplexity } from '../questions/entities/question.entity';
@@ -20,13 +36,29 @@ export class ExamsService {
 
   private seedSampleColleges() {
     const sampleColleges: CreateCollegeDto[] = [
-      { name: 'MIT College of Engineering', email: 'exam@mitcoe.edu', contactPerson: 'Dr. John Smith' },
-      { name: 'Stanford University', email: 'exams@stanford.edu', contactPerson: 'Prof. Jane Doe' },
-      { name: 'IIT Mumbai', email: 'exams@iitb.ac.in', contactPerson: 'Dr. Ramesh Kumar' },
-      { name: 'Oxford University', email: 'exams@ox.ac.uk', contactPerson: 'Dr. Elizabeth Brown' },
+      {
+        name: 'MIT College of Engineering',
+        email: 'exam@mitcoe.edu',
+        contactPerson: 'Dr. John Smith',
+      },
+      {
+        name: 'Stanford University',
+        email: 'exams@stanford.edu',
+        contactPerson: 'Prof. Jane Doe',
+      },
+      {
+        name: 'IIT Mumbai',
+        email: 'exams@iitb.ac.in',
+        contactPerson: 'Dr. Ramesh Kumar',
+      },
+      {
+        name: 'Oxford University',
+        email: 'exams@ox.ac.uk',
+        contactPerson: 'Dr. Elizabeth Brown',
+      },
     ];
 
-    sampleColleges.forEach(c => this.createCollege(c));
+    sampleColleges.forEach((c) => this.createCollege(c));
   }
 
   // ============ Exam CRUD ============
@@ -59,7 +91,7 @@ export class ExamsService {
 
   update(id: string, updateExamDto: UpdateExamDto): Exam {
     const exam = this.findOne(id);
-    
+
     const updatedExam = new Exam({
       ...exam,
       ...updateExamDto,
@@ -81,7 +113,8 @@ export class ExamsService {
   // ============ Exam Generation ============
 
   generateExam(generateDto: GenerateExamDto): Exam {
-    const { title, subject, duration, totalMarks, passingMarks, criteria } = generateDto;
+    const { title, subject, duration, totalMarks, passingMarks, criteria } =
+      generateDto;
 
     const sections: ExamSection[] = [];
     let currentMarks = 0;
@@ -100,8 +133,9 @@ export class ExamsService {
       sections.push({
         id: uuidv4(),
         title: 'Section A - Easy Questions',
-        instructions: 'Answer all questions. Each question carries marks as indicated.',
-        questionIds: easyQuestions.map(q => q.id),
+        instructions:
+          'Answer all questions. Each question carries marks as indicated.',
+        questionIds: easyQuestions.map((q) => q.id),
         totalMarks: sectionMarks,
       });
     }
@@ -113,14 +147,17 @@ export class ExamsService {
         complexity: [QuestionComplexity.MEDIUM],
       });
 
-      const sectionMarks = mediumQuestions.reduce((sum, q) => sum + q.weight, 0);
+      const sectionMarks = mediumQuestions.reduce(
+        (sum, q) => sum + q.weight,
+        0,
+      );
       currentMarks += sectionMarks;
 
       sections.push({
         id: uuidv4(),
         title: 'Section B - Medium Questions',
         instructions: 'Answer all questions. Show your work where applicable.',
-        questionIds: mediumQuestions.map(q => q.id),
+        questionIds: mediumQuestions.map((q) => q.id),
         totalMarks: sectionMarks,
       });
     }
@@ -139,7 +176,7 @@ export class ExamsService {
         id: uuidv4(),
         title: 'Section C - Hard Questions',
         instructions: 'Attempt any questions. Detailed answers are expected.',
-        questionIds: hardQuestions.map(q => q.id),
+        questionIds: hardQuestions.map((q) => q.id),
         totalMarks: sectionMarks,
       });
     }
@@ -151,14 +188,18 @@ export class ExamsService {
         complexity: [QuestionComplexity.EXPERT],
       });
 
-      const sectionMarks = expertQuestions.reduce((sum, q) => sum + q.weight, 0);
+      const sectionMarks = expertQuestions.reduce(
+        (sum, q) => sum + q.weight,
+        0,
+      );
       currentMarks += sectionMarks;
 
       sections.push({
         id: uuidv4(),
         title: 'Section D - Expert Questions',
-        instructions: 'These are advanced questions. Provide comprehensive answers.',
-        questionIds: expertQuestions.map(q => q.id),
+        instructions:
+          'These are advanced questions. Provide comprehensive answers.',
+        questionIds: expertQuestions.map((q) => q.id),
         totalMarks: sectionMarks,
       });
     }
@@ -184,7 +225,10 @@ export class ExamsService {
 
   // ============ PDF Generation ============
 
-  generatePdfContent(examId: string, includeAnswers: boolean = false): {
+  generatePdfContent(
+    examId: string,
+    includeAnswers: boolean = false,
+  ): {
     html: string;
     exam: Exam;
     questions: any[];
@@ -193,7 +237,7 @@ export class ExamsService {
     const allQuestionIds = exam.getAllQuestionIds();
     const questions = this.questionsService.getByIds(allQuestionIds);
 
-    const questionsMap = new Map(questions.map(q => [q.id, q]));
+    const questionsMap = new Map(questions.map((q) => [q.id, q]));
 
     let html = `
 <!DOCTYPE html>
@@ -513,7 +557,7 @@ export class ExamsService {
 
     let questionNumber = 1;
 
-    exam.sections.forEach((section, sectionIndex) => {
+    exam.sections.forEach((section) => {
       html += `
   <div class="section">
     <div class="section-header">
@@ -524,7 +568,7 @@ export class ExamsService {
     <div class="questions">
 `;
 
-      section.questionIds.forEach(qId => {
+      section.questionIds.forEach((qId) => {
         const question = questionsMap.get(qId);
         if (!question) return;
 
@@ -623,8 +667,8 @@ export class ExamsService {
 
   distributeExam(examId: string, collegeIds: string[]): Exam {
     const exam = this.findOne(examId);
-    
-    const newDistributions = collegeIds.map(collegeId => {
+
+    const newDistributions = collegeIds.map((collegeId) => {
       const college = this.getCollege(collegeId);
       return {
         collegeId,
@@ -657,25 +701,32 @@ export class ExamsService {
   } {
     const exam = this.findOne(dto.examId);
 
-    if (exam.status !== ExamStatus.DISTRIBUTED && exam.status !== ExamStatus.MODIFIED) {
+    if (
+      exam.status !== ExamStatus.DISTRIBUTED &&
+      exam.status !== ExamStatus.MODIFIED
+    ) {
       throw new BadRequestException('Can only modify distributed exams');
     }
 
-    const newModifications: ExamModification[] = dto.modifications.map(mod => ({
-      id: uuidv4(),
-      timestamp: new Date(),
-      questionId: mod.questionId,
-      changeType: mod.changeType,
-      description: mod.description,
-      syncedToColleges: [],
-    }));
+    const newModifications: ExamModification[] = dto.modifications.map(
+      (mod) => ({
+        id: uuidv4(),
+        timestamp: new Date(),
+        questionId: mod.questionId,
+        changeType: mod.changeType,
+        description: mod.description,
+        syncedToColleges: [],
+      }),
+    );
 
     // Apply modifications to sections
     const updatedSections = [...exam.sections];
-    dto.modifications.forEach(mod => {
+    dto.modifications.forEach((mod) => {
       if (mod.changeType === 'remove') {
-        updatedSections.forEach(section => {
-          section.questionIds = section.questionIds.filter(id => id !== mod.questionId);
+        updatedSections.forEach((section) => {
+          section.questionIds = section.questionIds.filter(
+            (id) => id !== mod.questionId,
+          );
         });
       } else if (mod.changeType === 'add' && mod.newQuestionId) {
         // Add to first section by default
@@ -697,15 +748,18 @@ export class ExamsService {
     this.exams.set(dto.examId, updatedExam);
 
     // Generate bloom filter for sync
-    const modificationIds = newModifications.map(m => m.id);
-    const filter = this.bloomFilterService.createModificationFilter(dto.examId, modificationIds);
+    const modificationIds = newModifications.map((m) => m.id);
+    const filter = this.bloomFilterService.createModificationFilter(
+      dto.examId,
+      modificationIds,
+    );
 
     return {
       exam: updatedExam,
       syncData: {
         filter,
         modificationsToSync: newModifications,
-        affectedColleges: exam.distributions.map(d => d.collegeId),
+        affectedColleges: exam.distributions.map((d) => d.collegeId),
       },
     };
   }
@@ -721,19 +775,19 @@ export class ExamsService {
     modificationsToApply: ExamModification[];
   } {
     const exam = this.findOne(examId);
-    
+
     // Create bloom filter from master modifications
-    const masterModIds = exam.modifications.map(m => m.id);
-    
+    const masterModIds = exam.modifications.map((m) => m.id);
+
     // Use bloom join to find which college modifications need syncing
     const { matchingRecords } = this.bloomFilterService.performBloomJoin(
-      exam.modifications.map(m => ({ id: m.id, questionId: m.questionId })),
+      exam.modifications.map((m) => ({ id: m.id, questionId: m.questionId })),
       collegeModifications,
       masterModIds,
     );
 
     const modificationsToApply = exam.modifications.filter(
-      m => !matchingRecords.some(mr => mr.id === m.id),
+      (m) => !matchingRecords.some((mr) => mr.id === m.id),
     );
 
     return {
@@ -752,8 +806,8 @@ export class ExamsService {
     }>;
   } {
     const exam = this.findOne(examId);
-    
-    const sections = exam.sections.map(section => ({
+
+    const sections = exam.sections.map((section) => ({
       section,
       questions: this.questionsService.getByIds(section.questionIds),
     }));
@@ -761,4 +815,3 @@ export class ExamsService {
     return { exam, sections };
   }
 }
-

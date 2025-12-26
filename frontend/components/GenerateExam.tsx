@@ -9,7 +9,6 @@ import {
   CheckCircle,
   Clock,
   Award,
-  Layers,
   Loader2,
 } from 'lucide-react';
 

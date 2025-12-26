@@ -8,4 +8,3 @@ import { BloomFilterService } from './bloom-filter.service';
   exports: [BloomFilterService],
 })
 export class BloomFilterModule {}
-
