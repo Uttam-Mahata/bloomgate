@@ -26,7 +26,6 @@ export default function Home() {
   };
 
   const handleExamGenerated = (exam: Exam) => {
-    // Optionally navigate to exams tab
     setActiveTab('exams');
   };
 
@@ -52,10 +51,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
       
-      <main className="ml-64 p-8 transition-all duration-300">
+      <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="max-w-7xl mx-auto">
           {renderContent()}
         </div>
