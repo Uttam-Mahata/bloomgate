@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { examsApi, collegesApi, emailApi, Exam, College } from '@/lib/api';
+import {
+  Send,
+  FileText,
+  Building2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  BarChart3,
+  History,
+  Loader2,
+} from 'lucide-react';
 
 export default function Distribution() {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -40,29 +51,20 @@ export default function Distribution() {
     setDistributionLog([]);
 
     try {
-      // Get exam PDF content
       const { html: pdfHtml, exam } = await examsApi.getPdfContent(selectedExam);
-
-      // Get selected college details
       const selectedCollegeDetails = colleges
         .filter((c) => selectedColleges.includes(c.id))
         .map((c) => ({ id: c.id, name: c.name, email: c.email }));
 
-      // Distribute via API
       await examsApi.distribute(selectedExam, selectedColleges);
-
-      // Send emails
       const emailResults = await emailApi.distribute(exam.title, pdfHtml, selectedCollegeDetails);
 
-      // Update distribution log
       const logs = emailResults.map((r: { collegeName: string; status: string; timestamp: string }) => ({
         collegeName: r.collegeName,
         status: r.status,
         time: new Date(r.timestamp).toLocaleTimeString(),
       }));
       setDistributionLog(logs);
-
-      // Reload exams to reflect new distribution status
       loadData();
     } catch (error) {
       console.error('Failed to distribute exam:', error);
@@ -77,60 +79,54 @@ export default function Distribution() {
     );
   };
 
-  const selectAllColleges = () => {
-    setSelectedColleges(colleges.map((c) => c.id));
-  };
+  const selectAllColleges = () => setSelectedColleges(colleges.map((c) => c.id));
+  const deselectAllColleges = () => setSelectedColleges([]);
 
-  const deselectAllColleges = () => {
-    setSelectedColleges([]);
-  };
-
-  const distributedExams = exams.filter(
-    (e) => e.status === 'distributed' || e.status === 'modified'
-  );
+  const distributedExams = exams.filter((e) => e.status === 'distributed' || e.status === 'modified');
   const draftExams = exams.filter((e) => e.status === 'draft');
 
   return (
-    <div className="space-y-6">
+    <div className="section-gap">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <span className="text-3xl">📤</span>
+      <div className="mb-md">
+        <h1 className="text-2xl font-bold flex items-center gap-sm">
+          <Send size={24} className="text-[var(--accent-primary)]" />
           Exam Distribution
         </h1>
-        <p className="text-[var(--text-secondary)] mt-1">
+        <p className="text-[var(--text-secondary)] mt-1 text-sm">
           Distribute exam papers to colleges via email with PDF attachments
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
         {/* Distribution Panel */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-md">
           {/* Exam Selection */}
           <div className="card">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span>📝</span> Select Exam Paper
+            <h3 className="text-base font-semibold mb-md flex items-center gap-sm">
+              <FileText size={18} className="text-[var(--accent-primary)]" />
+              Select Exam Paper
             </h3>
 
             {loading ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="skeleton h-16 rounded-lg"></div>
+                  <div key={i} className="skeleton h-14 rounded-lg"></div>
                 ))}
               </div>
             ) : draftExams.length === 0 ? (
               <div className="text-center py-8 text-[var(--text-muted)]">
-                <p className="text-4xl mb-3">📄</p>
+                <FileText size={36} className="mx-auto mb-3 opacity-50" />
                 <p>No draft exams available for distribution</p>
                 <p className="text-sm mt-1">Generate a new exam first</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {draftExams.map((exam) => (
                   <button
                     key={exam.id}
                     onClick={() => setSelectedExam(exam.id)}
-                    className={`w-full p-4 rounded-xl border text-left transition-all ${
+                    className={`w-full p-3 rounded-xl border text-left transition-all ${
                       selectedExam === exam.id
                         ? 'border-[var(--accent-primary)] bg-[var(--accent-glow)]'
                         : 'border-[var(--border-subtle)] hover:border-[var(--border-default)]'
@@ -138,8 +134,8 @@ export default function Distribution() {
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium">{exam.title}</p>
-                        <p className="text-sm text-[var(--text-muted)]">
+                        <p className="font-medium text-sm">{exam.title}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-1">
                           {exam.subject} • {exam.duration} min • {exam.totalMarks} marks
                         </p>
                       </div>
@@ -153,62 +149,57 @@ export default function Distribution() {
 
           {/* College Selection */}
           <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <span>🏛️</span> Select Colleges
-              </h3>
-              <div className="flex gap-2">
-                <button onClick={selectAllColleges} className="btn btn-ghost text-xs">
-                  Select All
+            <div className="college-selection-header">
+              <div className="college-selection-title">
+                <Building2 size={18} className="text-[var(--accent-primary)]" />
+                <div>
+                  <h3>Select Colleges</h3>
+                  <p>{selectedColleges.length} of {colleges.length} selected</p>
+                </div>
+              </div>
+              <div className="college-selection-actions">
+                <button onClick={selectAllColleges} className="action-btn">
+                  <CheckCircle size={14} />
+                  All
                 </button>
-                <button onClick={deselectAllColleges} className="btn btn-ghost text-xs">
-                  Deselect All
+                <button onClick={deselectAllColleges} className="action-btn">
+                  <XCircle size={14} />
+                  Clear
                 </button>
               </div>
             </div>
 
             {loading ? (
-              <div className="space-y-3">
+              <div className="college-grid">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="skeleton h-14 rounded-lg"></div>
+                  <div key={i} className="skeleton h-16 rounded-lg"></div>
                 ))}
               </div>
             ) : colleges.length === 0 ? (
               <div className="text-center py-8 text-[var(--text-muted)]">
-                <p className="text-4xl mb-3">🏛️</p>
+                <Building2 size={36} className="mx-auto mb-3 opacity-50" />
                 <p>No colleges registered</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {colleges.map((college) => (
-                  <button
-                    key={college.id}
-                    onClick={() => toggleCollege(college.id)}
-                    className={`p-4 rounded-xl border text-left transition-all ${
-                      selectedColleges.includes(college.id)
-                        ? 'border-green-500 bg-green-500/10'
-                        : 'border-[var(--border-subtle)] hover:border-[var(--border-default)]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          selectedColleges.includes(college.id)
-                            ? 'border-green-500 bg-green-500'
-                            : 'border-[var(--border-default)]'
-                        }`}
-                      >
-                        {selectedColleges.includes(college.id) && (
-                          <span className="text-xs text-white">✓</span>
-                        )}
+              <div className="college-grid">
+                {colleges.map((college) => {
+                  const isSelected = selectedColleges.includes(college.id);
+                  return (
+                    <button
+                      key={college.id}
+                      onClick={() => toggleCollege(college.id)}
+                      className={`college-item ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className={`college-checkbox ${isSelected ? 'checked' : ''}`}>
+                        {isSelected && <CheckCircle size={12} />}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{college.name}</p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">{college.email}</p>
+                      <div className="college-info">
+                        <span className="college-name">{college.name}</span>
+                        <span className="college-email">{college.email}</span>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -217,16 +208,16 @@ export default function Distribution() {
           <button
             onClick={handleDistribute}
             disabled={!selectedExam || selectedColleges.length === 0 || distributing}
-            className="btn btn-primary w-full py-4 text-lg"
+            className="btn btn-primary w-full py-3"
           >
             {distributing ? (
-              <span className="animate-pulse flex items-center gap-2">
-                <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <span className="flex items-center gap-2">
+                <Loader2 size={18} className="animate-spin" />
                 Distributing...
               </span>
             ) : (
               <>
-                <span>📧</span>
+                <Send size={18} />
                 Distribute to {selectedColleges.length} College
                 {selectedColleges.length !== 1 ? 's' : ''}
               </>
@@ -235,30 +226,27 @@ export default function Distribution() {
 
           {/* Distribution Log */}
           {distributionLog.length > 0 && (
-            <div className="card">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>📋</span> Distribution Log
+            <div className="card animate-fade-in">
+              <h3 className="text-base font-semibold mb-md flex items-center gap-sm">
+                <History size={18} className="text-[var(--accent-primary)]" />
+                Distribution Log
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 {distributionLog.map((log, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-tertiary)]"
+                    className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-tertiary)]"
                   >
                     <div className="flex items-center gap-3">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          log.status === 'sent' ? 'bg-green-500' : 'bg-red-500'
-                        }`}
-                      ></span>
-                      <span>{log.collegeName}</span>
+                      {log.status === 'sent' ? (
+                        <CheckCircle size={16} className="text-green-400" />
+                      ) : (
+                        <XCircle size={16} className="text-red-400" />
+                      )}
+                      <span className="text-sm">{log.collegeName}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span
-                        className={`badge ${
-                          log.status === 'sent' ? 'badge-success' : 'badge-error'
-                        }`}
-                      >
+                      <span className={`badge ${log.status === 'sent' ? 'badge-success' : 'badge-error'}`}>
                         {log.status}
                       </span>
                       <span className="text-xs text-[var(--text-muted)]">{log.time}</span>
@@ -270,47 +258,60 @@ export default function Distribution() {
           )}
         </div>
 
-        {/* Sidebar - Distribution History */}
-        <div className="space-y-6">
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span>📊</span> Distribution Stats
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-[var(--bg-tertiary)] text-center">
-                <p className="text-3xl font-bold text-gradient">{distributedExams.length}</p>
-                <p className="text-sm text-[var(--text-muted)]">Exams Distributed</p>
+        {/* Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="stats-card">
+            <div className="stats-card-header">
+              <div className="stats-icon">
+                <BarChart3 size={18} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-[var(--bg-tertiary)] text-center">
-                  <p className="text-xl font-bold">{colleges.length}</p>
-                  <p className="text-xs text-[var(--text-muted)]">Colleges</p>
+              <h3>Distribution Stats</h3>
+            </div>
+            <div className="stats-card-body">
+              <div className="stats-main">
+                <div className="stats-main-value">{distributedExams.length}</div>
+                <div className="stats-main-label">Exams Distributed</div>
+              </div>
+              <div className="stats-grid">
+                <div className="stats-item">
+                  <div className="stats-item-icon bg-blue-500/15 text-blue-400">
+                    <Building2 size={16} />
+                  </div>
+                  <div className="stats-item-content">
+                    <span className="stats-item-value">{colleges.length}</span>
+                    <span className="stats-item-label">Colleges</span>
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-[var(--bg-tertiary)] text-center">
-                  <p className="text-xl font-bold">{draftExams.length}</p>
-                  <p className="text-xs text-[var(--text-muted)]">Pending</p>
+                <div className="stats-item">
+                  <div className="stats-item-icon bg-amber-500/15 text-amber-400">
+                    <Clock size={16} />
+                  </div>
+                  <div className="stats-item-content">
+                    <span className="stats-item-value">{draftExams.length}</span>
+                    <span className="stats-item-label">Pending</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="card">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span>📜</span> Recent Distributions
+            <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <Clock size={18} className="text-[var(--accent-primary)]" />
+              Recent Distributions
             </h3>
             {distributedExams.length === 0 ? (
-              <p className="text-center py-6 text-[var(--text-muted)]">
+              <p className="text-center py-6 text-[var(--text-muted)] text-sm">
                 No distributions yet
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {distributedExams.slice(0, 5).map((exam) => (
-                  <div key={exam.id} className="p-3 rounded-lg bg-[var(--bg-tertiary)]">
-                    <p className="font-medium truncate">{exam.title}</p>
+                  <div key={exam.id} className="p-2 rounded-lg bg-[var(--bg-tertiary)]">
+                    <p className="font-medium text-sm truncate">{exam.title}</p>
                     <div className="flex justify-between items-center mt-1">
                       <span className="text-xs text-[var(--text-muted)]">
-                        {exam.distributions.length} college
-                        {exam.distributions.length !== 1 ? 's' : ''}
+                        {exam.distributions.length} college{exam.distributions.length !== 1 ? 's' : ''}
                       </span>
                       <span className={`badge ${exam.status === 'modified' ? 'badge-warning' : 'badge-success'}`}>
                         {exam.status}
@@ -326,4 +327,3 @@ export default function Distribution() {
     </div>
   );
 }
-

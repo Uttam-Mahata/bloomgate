@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { examsApi, Exam, Question } from '@/lib/api';
+import { examsApi, Exam } from '@/lib/api';
+import {
+  ArrowLeft,
+  Printer,
+  Download,
+  Loader2,
+  FileText,
+  Eye,
+} from 'lucide-react';
 
 interface PdfViewerProps {
   examId: string;
@@ -55,20 +63,20 @@ export default function PdfViewer({ examId, onClose }: PdfViewerProps) {
   return (
     <div className="fixed inset-0 bg-[var(--bg-primary)] z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] px-6 py-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
+      <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] px-4 sm:px-6 py-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
             <button onClick={onClose} className="btn btn-ghost">
-              ← Back
+              <ArrowLeft size={18} /> Back
             </button>
-            <div>
-              <h2 className="font-semibold">{exam?.title || 'Loading...'}</h2>
-              <p className="text-sm text-[var(--text-muted)]">
+            <div className="hidden sm:block">
+              <h2 className="font-semibold text-sm">{exam?.title || 'Loading...'}</h2>
+              <p className="text-xs text-[var(--text-muted)]">
                 {exam?.subject} • v{exam?.version}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -79,10 +87,10 @@ export default function PdfViewer({ examId, onClose }: PdfViewerProps) {
               <span className="text-sm">Include Answers</span>
             </label>
             <button onClick={handlePrint} className="btn btn-secondary">
-              🖨️ Print
+              <Printer size={16} /> <span className="hidden sm:inline">Print</span>
             </button>
             <button onClick={handleDownload} className="btn btn-primary">
-              ⬇️ Download
+              <Download size={16} /> <span className="hidden sm:inline">Download</span>
             </button>
           </div>
         </div>
@@ -93,16 +101,16 @@ export default function PdfViewer({ examId, onClose }: PdfViewerProps) {
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <div className="w-12 h-12 border-4 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <Loader2 size={40} className="mx-auto mb-4 animate-spin text-[var(--accent-primary)]" />
               <p className="text-[var(--text-muted)]">Loading exam paper...</p>
             </div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto my-8 shadow-2xl">
+          <div className="max-w-4xl mx-auto my-4 sm:my-8 shadow-2xl">
             <iframe
               srcDoc={html}
               className="w-full bg-white rounded-lg"
-              style={{ minHeight: '1200px', height: 'auto' }}
+              style={{ minHeight: '1000px', height: 'auto' }}
               title="Exam PDF Preview"
             />
           </div>
@@ -111,4 +119,3 @@ export default function PdfViewer({ examId, onClose }: PdfViewerProps) {
     </div>
   );
 }
-

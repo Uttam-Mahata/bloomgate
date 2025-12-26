@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { collegesApi, College } from '@/lib/api';
+import {
+  Plus,
+  Building2,
+  Mail,
+  User,
+  Phone,
+  MapPin,
+  GraduationCap,
+  X,
+} from 'lucide-react';
 
 export default function Colleges() {
   const [colleges, setColleges] = useState<College[]>([]);
@@ -43,81 +53,81 @@ export default function Colleges() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="section-gap">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-md mb-md">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <span className="text-3xl">🏛️</span>
+          <h1 className="text-2xl font-bold flex items-center gap-sm">
+            <Building2 size={24} className="text-[var(--accent-primary)]" />
             College Management
           </h1>
-          <p className="text-[var(--text-secondary)] mt-1">
+          <p className="text-[var(--text-secondary)] mt-1 text-sm">
             Manage registered colleges for exam distribution
           </p>
         </div>
         <button onClick={() => setShowModal(true)} className="btn btn-primary">
-          <span>+</span> Add College
+          <Plus size={18} /> Add College
         </button>
       </div>
 
       {/* Colleges Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="card">
-              <div className="skeleton h-6 w-3/4 mb-4"></div>
+              <div className="skeleton h-5 w-3/4 mb-4"></div>
               <div className="skeleton h-4 w-1/2 mb-2"></div>
               <div className="skeleton h-4 w-2/3"></div>
             </div>
           ))}
         </div>
       ) : colleges.length === 0 ? (
-        <div className="card text-center py-16">
-          <p className="text-5xl mb-4">🏫</p>
+        <div className="card text-center py-12">
+          <Building2 size={48} className="mx-auto mb-4 text-[var(--text-muted)] opacity-50" />
           <p className="text-lg font-medium">No colleges registered</p>
-          <p className="text-[var(--text-muted)] mt-1">
+          <p className="text-[var(--text-muted)] mt-1 text-sm">
             Add colleges to start distributing exam papers
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
           {colleges.map((college, index) => (
             <div
               key={college.id}
               className="card card-interactive animate-fade-in"
-              style={{ animationDelay: `${index * 0.05}s` }}
+              style={{ animationDelay: `${index * 0.03}s` }}
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl">
-                  🎓
+                <div className="icon-wrapper icon-wrapper-md bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                  <GraduationCap size={20} />
                 </div>
                 <span className={`badge ${college.isActive ? 'badge-success' : 'badge-error'}`}>
                   {college.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
-              <h3 className="font-semibold text-lg mb-2">{college.name}</h3>
+              <h3 className="font-semibold text-base mb-3 line-clamp-1">{college.name}</h3>
 
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                  <span>📧</span>
+                  <Mail size={14} className="flex-shrink-0" />
                   <span className="truncate">{college.email}</span>
                 </div>
                 {college.contactPerson && (
                   <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                    <span>👤</span>
+                    <User size={14} className="flex-shrink-0" />
                     <span>{college.contactPerson}</span>
                   </div>
                 )}
                 {college.phone && (
                   <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                    <span>📞</span>
+                    <Phone size={14} className="flex-shrink-0" />
                     <span>{college.phone}</span>
                   </div>
                 )}
                 {college.address && (
                   <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                    <span>📍</span>
+                    <MapPin size={14} className="flex-shrink-0" />
                     <span className="truncate">{college.address}</span>
                   </div>
                 )}
@@ -131,10 +141,15 @@ export default function Colleges() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-6">Add New College</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Add New College</h2>
+              <button onClick={() => setShowModal(false)} className="btn btn-ghost btn-icon">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-md">
               <div>
-                <label className="block text-sm text-[var(--text-muted)] mb-2">
+                <label className="block text-sm text-[var(--text-muted)] mb-sm">
                   College Name *
                 </label>
                 <input
@@ -148,7 +163,7 @@ export default function Colleges() {
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-muted)] mb-2">Email *</label>
+                <label className="block text-sm text-[var(--text-muted)] mb-sm">Email *</label>
                 <input
                   type="email"
                   className="input"
@@ -160,7 +175,7 @@ export default function Colleges() {
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-muted)] mb-2">
+                <label className="block text-sm text-[var(--text-muted)] mb-sm">
                   Contact Person
                 </label>
                 <input
@@ -173,7 +188,7 @@ export default function Colleges() {
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-muted)] mb-2">Phone</label>
+                <label className="block text-sm text-[var(--text-muted)] mb-sm">Phone</label>
                 <input
                   type="tel"
                   className="input"
@@ -184,7 +199,7 @@ export default function Colleges() {
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-muted)] mb-2">Address</label>
+                <label className="block text-sm text-[var(--text-muted)] mb-sm">Address</label>
                 <textarea
                   className="input min-h-[80px]"
                   value={formData.address}
@@ -193,7 +208,7 @@ export default function Colleges() {
                 />
               </div>
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-md pt-md">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -212,4 +227,3 @@ export default function Colleges() {
     </div>
   );
 }
-
