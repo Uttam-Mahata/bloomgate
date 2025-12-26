@@ -82,7 +82,9 @@ export class BloomFilter {
    */
   merge(other: BloomFilter): void {
     if (this.size !== other.size || this.hashCount !== other.hashCount) {
-      throw new Error('Cannot merge bloom filters with different configurations');
+      throw new Error(
+        'Cannot merge bloom filters with different configurations',
+      );
     }
     for (let i = 0; i < this.bitArray.length; i++) {
       this.bitArray[i] |= other.bitArray[i];
@@ -111,11 +113,11 @@ export class BloomFilter {
 
 /**
  * BloomJoin implementation for distributed exam paper synchronization
- * 
+ *
  * Scenario:
  * - Site 1 (Admin): Has the master question bank and exam papers
  * - Site 2..N (Colleges): Have distributed copies of exam papers
- * 
+ *
  * When modifications are made after PDF distribution:
  * 1. Admin creates a bloom filter of modified question IDs
  * 2. Colleges filter their local records against the bloom filter
@@ -128,7 +130,7 @@ export class BloomJoinService {
    */
   createFilterFromRecords(recordIds: string[]): BloomFilter {
     const filter = new BloomFilter(1024, 3);
-    recordIds.forEach(id => filter.add(id));
+    recordIds.forEach((id) => filter.add(id));
     return filter;
   }
 
@@ -140,7 +142,7 @@ export class BloomJoinService {
     records: T[],
     filter: BloomFilter,
   ): T[] {
-    return records.filter(record => filter.contains(record.id));
+    return records.filter((record) => filter.contains(record.id));
   }
 
   /**
@@ -151,14 +153,14 @@ export class BloomJoinService {
     masterRecords: T[],
     filteredRecords: T[],
   ): { updated: T[]; toSync: T[] } {
-    const masterMap = new Map(masterRecords.map(r => [r.id, r]));
-    const filteredMap = new Map(filteredRecords.map(r => [r.id, r]));
+    const masterMap = new Map(masterRecords.map((r) => [r.id, r]));
+    const filteredMap = new Map(filteredRecords.map((r) => [r.id, r]));
 
     const updated: T[] = [];
     const toSync: T[] = [];
 
     // Find records that need syncing
-    masterRecords.forEach(master => {
+    masterRecords.forEach((master) => {
       const filtered = filteredMap.get(master.id);
       if (filtered) {
         // Record exists in both - check if update needed
@@ -172,4 +174,3 @@ export class BloomJoinService {
     return { updated, toSync };
   }
 }
-

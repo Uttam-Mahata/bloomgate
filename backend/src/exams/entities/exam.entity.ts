@@ -82,7 +82,7 @@ export class Exam {
    * Get all question IDs across all sections
    */
   getAllQuestionIds(): string[] {
-    return this.sections.flatMap(s => s.questionIds);
+    return this.sections.flatMap((s) => s.questionIds);
   }
 
   /**
@@ -96,7 +96,7 @@ export class Exam {
    * Get modification IDs for bloom filter
    */
   getModificationIds(): string[] {
-    return this.modifications.map(m => m.id);
+    return this.modifications.map((m) => m.id);
   }
 }
 
@@ -109,4 +109,3 @@ export interface College {
   phone?: string;
   isActive: boolean;
 }
-

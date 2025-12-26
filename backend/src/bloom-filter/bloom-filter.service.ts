@@ -9,7 +9,10 @@ export class BloomFilterService {
   /**
    * Create and store a bloom filter for a site's modifications
    */
-  createModificationFilter(siteId: string, modifiedIds: string[]): { bitArray: number[]; size: number; hashCount: number } {
+  createModificationFilter(
+    siteId: string,
+    modifiedIds: string[],
+  ): { bitArray: number[]; size: number; hashCount: number } {
     const filter = this.bloomJoin.createFilterFromRecords(modifiedIds);
     this.siteFilters.set(siteId, filter);
     return filter.serialize();
@@ -34,7 +37,11 @@ export class BloomFilterService {
     masterRecords: T[],
     siteRecords: T[],
     modifiedIds: string[],
-  ): { filter: ReturnType<BloomFilter['serialize']>; matchingRecords: T[]; syncRequired: T[] } {
+  ): {
+    filter: ReturnType<BloomFilter['serialize']>;
+    matchingRecords: T[];
+    syncRequired: T[];
+  } {
     // Step 1: Create bloom filter from master modifications
     const filter = this.bloomJoin.createFilterFromRecords(modifiedIds);
 
@@ -42,7 +49,10 @@ export class BloomFilterService {
     const matchingRecords = this.bloomJoin.filterRecords(siteRecords, filter);
 
     // Step 3: Compute join
-    const { toSync } = this.bloomJoin.computeJoin(masterRecords, matchingRecords);
+    const { toSync } = this.bloomJoin.computeJoin(
+      masterRecords,
+      matchingRecords,
+    );
 
     return {
       filter: filter.serialize(),
@@ -51,4 +61,3 @@ export class BloomFilterService {
     };
   }
 }
-

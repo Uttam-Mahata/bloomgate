@@ -32,13 +32,13 @@ export class EmailService {
       // In production, integrate with:
       // - Nodemailer for SMTP
       // - SendGrid, AWS SES, or similar services
-      
+
       this.logger.log(`Sending email to: ${options.to}`);
       this.logger.log(`Subject: ${options.subject}`);
-      
+
       // Simulate email sending delay
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       this.logger.log(`Email sent successfully to ${options.to}`);
       return true;
     } catch (error) {
@@ -186,7 +186,10 @@ export class EmailService {
     const results: DistributionResult[] = [];
 
     const modificationsList = modifications
-      .map(m => `<li><strong>${m.changeType.toUpperCase()}:</strong> ${m.description}</li>`)
+      .map(
+        (m) =>
+          `<li><strong>${m.changeType.toUpperCase()}:</strong> ${m.description}</li>`,
+      )
       .join('');
 
     for (const college of colleges) {
@@ -296,4 +299,3 @@ export class EmailService {
     return results;
   }
 }
-
