@@ -218,7 +218,14 @@ export const examsApi = {
     return res.json();
   },
 
-  modify: async (examId: string, modifications: { questionId: string; changeType: string; description: string }[]): Promise<any> => {
+  modify: async (examId: string, modifications: { questionId: string; changeType: string; description: string }[]): Promise<{
+    exam: Exam;
+    syncData: {
+      filter: { bitArray: number[]; size: number; hashCount: number };
+      modificationsToSync: { id: string; questionId: string; changeType: string; description: string }[];
+      affectedColleges: string[];
+    };
+  }> => {
     const res = await fetch(`${API_BASE}/exams/modify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

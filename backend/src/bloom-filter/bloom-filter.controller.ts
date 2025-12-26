@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { BloomFilterService } from './bloom-filter.service';
 
 @Controller('bloom-filter')
