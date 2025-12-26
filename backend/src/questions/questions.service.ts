@@ -1,12 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Question, QuestionComplexity, QuestionType } from './entities/question.entity';
-import { CreateQuestionDto, UpdateQuestionDto, FilterQuestionsDto } from './dto/create-question.dto';
+import {
+  Question,
+  QuestionComplexity,
+  QuestionType,
+} from './entities/question.entity';
+import {
+  CreateQuestionDto,
+  UpdateQuestionDto,
+  FilterQuestionsDto,
+} from './dto/create-question.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class QuestionsService {
   private questions: Map<string, Question> = new Map();
-  private modificationLog: { id: string; timestamp: Date; action: string }[] = [];
+  private modificationLog: { id: string; timestamp: Date; action: string }[] =
+    [];
 
   constructor() {
     // Initialize with some sample questions
@@ -30,7 +39,8 @@ export class QuestionsService {
           { id: '4', text: 'O(1)', isCorrect: false },
         ],
         answer: 'O(log n)',
-        explanation: 'Binary search divides the search space in half each iteration, resulting in logarithmic time complexity.',
+        explanation:
+          'Binary search divides the search space in half each iteration, resulting in logarithmic time complexity.',
       },
       {
         text: 'Explain the concept of a Bloom Filter and its applications.',
@@ -40,8 +50,10 @@ export class QuestionsService {
         subject: 'Computer Science',
         topic: 'Data Structures',
         tags: ['bloom-filter', 'probabilistic', 'data-structures'],
-        answer: 'A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It may have false positives but never false negatives.',
-        explanation: 'Applications include spell checkers, cache filtering, and distributed systems for membership queries.',
+        answer:
+          'A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It may have false positives but never false negatives.',
+        explanation:
+          'Applications include spell checkers, cache filtering, and distributed systems for membership queries.',
       },
       {
         text: 'What is the difference between TCP and UDP?',
@@ -51,7 +63,8 @@ export class QuestionsService {
         subject: 'Computer Science',
         topic: 'Networking',
         tags: ['networking', 'protocols', 'tcp', 'udp'],
-        answer: 'TCP is connection-oriented and reliable, while UDP is connectionless and faster but unreliable.',
+        answer:
+          'TCP is connection-oriented and reliable, while UDP is connectionless and faster but unreliable.',
       },
       {
         text: 'A hash table has O(1) average time complexity for search operations.',
@@ -79,7 +92,7 @@ export class QuestionsService {
       },
     ];
 
-    sampleQuestions.forEach(q => this.create(q));
+    sampleQuestions.forEach((q) => this.create(q));
   }
 
   create(createQuestionDto: CreateQuestionDto): Question {
@@ -104,28 +117,36 @@ export class QuestionsService {
 
     if (filters) {
       if (filters.subject) {
-        questions = questions.filter(q => q.subject.toLowerCase().includes(filters.subject!.toLowerCase()));
+        questions = questions.filter((q) =>
+          q.subject.toLowerCase().includes(filters.subject!.toLowerCase()),
+        );
       }
       if (filters.topic) {
-        questions = questions.filter(q => q.topic.toLowerCase().includes(filters.topic!.toLowerCase()));
+        questions = questions.filter((q) =>
+          q.topic.toLowerCase().includes(filters.topic!.toLowerCase()),
+        );
       }
       if (filters.complexity) {
-        questions = questions.filter(q => q.complexity === filters.complexity);
+        questions = questions.filter(
+          (q) => q.complexity === filters.complexity,
+        );
       }
       if (filters.type) {
-        questions = questions.filter(q => q.type === filters.type);
+        questions = questions.filter((q) => q.type === filters.type);
       }
       if (filters.tags && filters.tags.length > 0) {
-        questions = questions.filter(q => filters.tags!.some(tag => q.tags.includes(tag)));
+        questions = questions.filter((q) =>
+          filters.tags!.some((tag) => q.tags.includes(tag)),
+        );
       }
       if (filters.minWeight !== undefined) {
-        questions = questions.filter(q => q.weight >= filters.minWeight!);
+        questions = questions.filter((q) => q.weight >= filters.minWeight!);
       }
       if (filters.maxWeight !== undefined) {
-        questions = questions.filter(q => q.weight <= filters.maxWeight!);
+        questions = questions.filter((q) => q.weight <= filters.maxWeight!);
       }
       if (filters.isActive !== undefined) {
-        questions = questions.filter(q => q.isActive === filters.isActive);
+        questions = questions.filter((q) => q.isActive === filters.isActive);
       }
     }
 
@@ -165,7 +186,7 @@ export class QuestionsService {
   }
 
   bulkImport(questions: CreateQuestionDto[]): Question[] {
-    return questions.map(q => this.create(q));
+    return questions.map((q) => this.create(q));
   }
 
   /**
@@ -173,16 +194,18 @@ export class QuestionsService {
    */
   getByIds(ids: string[]): Question[] {
     return ids
-      .map(id => this.questions.get(id))
+      .map((id) => this.questions.get(id))
       .filter((q): q is Question => q !== undefined);
   }
 
   /**
    * Get all modification logs for bloom filter sync
    */
-  getModificationLog(since?: Date): { id: string; timestamp: Date; action: string }[] {
+  getModificationLog(
+    since?: Date,
+  ): { id: string; timestamp: Date; action: string }[] {
     if (since) {
-      return this.modificationLog.filter(log => log.timestamp >= since);
+      return this.modificationLog.filter((log) => log.timestamp >= since);
     }
     return this.modificationLog;
   }
@@ -191,7 +214,7 @@ export class QuestionsService {
    * Get modified question IDs for bloom filter
    */
   getModifiedIds(since?: Date): string[] {
-    return this.getModificationLog(since).map(log => log.id);
+    return this.getModificationLog(since).map((log) => log.id);
   }
 
   private logModification(id: string, action: string): void {
@@ -213,10 +236,10 @@ export class QuestionsService {
     const bySubject: Record<string, number> = {};
 
     // Initialize
-    Object.values(QuestionComplexity).forEach(c => (byComplexity[c] = 0));
-    Object.values(QuestionType).forEach(t => (byType[t] = 0));
+    Object.values(QuestionComplexity).forEach((c) => (byComplexity[c] = 0));
+    Object.values(QuestionType).forEach((t) => (byType[t] = 0));
 
-    questions.forEach(q => {
+    questions.forEach((q) => {
       byComplexity[q.complexity]++;
       byType[q.type]++;
       bySubject[q.subject] = (bySubject[q.subject] || 0) + 1;
@@ -233,23 +256,21 @@ export class QuestionsService {
   /**
    * Generate random selection of questions based on criteria
    */
-  generateRandomSelection(
-    criteria: {
-      count: number;
-      subject?: string;
-      complexity?: QuestionComplexity[];
-      types?: QuestionType[];
-      totalWeight?: number;
-    },
-  ): Question[] {
+  generateRandomSelection(criteria: {
+    count: number;
+    subject?: string;
+    complexity?: QuestionComplexity[];
+    types?: QuestionType[];
+    totalWeight?: number;
+  }): Question[] {
     let pool = this.findAll({ subject: criteria.subject, isActive: true });
 
     if (criteria.complexity && criteria.complexity.length > 0) {
-      pool = pool.filter(q => criteria.complexity!.includes(q.complexity));
+      pool = pool.filter((q) => criteria.complexity!.includes(q.complexity));
     }
 
     if (criteria.types && criteria.types.length > 0) {
-      pool = pool.filter(q => criteria.types!.includes(q.type));
+      pool = pool.filter((q) => criteria.types!.includes(q.type));
     }
 
     // Shuffle and select
@@ -274,4 +295,3 @@ export class QuestionsService {
     return shuffled.slice(0, criteria.count);
   }
 }
-

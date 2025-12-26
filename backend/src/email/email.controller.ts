@@ -6,9 +6,7 @@ export class EmailController {
   constructor(private readonly emailService: EmailService) {}
 
   @Post('send')
-  async sendEmail(
-    @Body() body: { to: string; subject: string; html: string },
-  ) {
+  async sendEmail(@Body() body: { to: string; subject: string; html: string }) {
     const result = await this.emailService.sendEmail(body);
     return { success: result };
   }
@@ -45,4 +43,3 @@ export class EmailController {
     );
   }
 }
-
