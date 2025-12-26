@@ -557,7 +557,7 @@ export class ExamsService {
 
     let questionNumber = 1;
 
-    exam.sections.forEach((section, sectionIndex) => {
+    exam.sections.forEach((section) => {
       html += `
   <div class="section">
     <div class="section-header">

@@ -15,17 +15,16 @@ import { Exam } from '@/lib/api';
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [pdfViewerExamId, setPdfViewerExamId] = useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleViewPdf = (examId: string) => {
     setPdfViewerExamId(examId);
   };
 
-  const handleDistribute = (exam: Exam) => {
+  const handleDistribute = (_exam: Exam) => {
     setActiveTab('distribute');
   };
 
-  const handleExamGenerated = (exam: Exam) => {
+  const handleExamGenerated = (_exam: Exam) => {
     setActiveTab('exams');
   };
 
@@ -57,7 +56,7 @@ export default function Home() {
         onTabChange={setActiveTab} 
       />
       
-      <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <main className="main-content">
         <div className="max-w-7xl mx-auto">
           {renderContent()}
         </div>

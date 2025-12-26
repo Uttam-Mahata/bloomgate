@@ -153,7 +153,6 @@ export class BloomJoinService {
     masterRecords: T[],
     filteredRecords: T[],
   ): { updated: T[]; toSync: T[] } {
-    const masterMap = new Map(masterRecords.map((r) => [r.id, r]));
     const filteredMap = new Map(filteredRecords.map((r) => [r.id, r]));
 
     const updated: T[] = [];
