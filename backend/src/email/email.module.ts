@@ -8,4 +8,3 @@ import { EmailController } from './email.controller';
   exports: [EmailService],
 })
 export class EmailModule {}
-

@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Question } from '../../questions/entities/question.entity';
 
 export enum ExamStatus {
   DRAFT = 'draft',
@@ -82,7 +81,7 @@ export class Exam {
    * Get all question IDs across all sections
    */
   getAllQuestionIds(): string[] {
-    return this.sections.flatMap(s => s.questionIds);
+    return this.sections.flatMap((s) => s.questionIds);
   }
 
   /**
@@ -96,7 +95,7 @@ export class Exam {
    * Get modification IDs for bloom filter
    */
   getModificationIds(): string[] {
-    return this.modifications.map(m => m.id);
+    return this.modifications.map((m) => m.id);
   }
 }
 
@@ -109,4 +108,3 @@ export interface College {
   phone?: string;
   isActive: boolean;
 }
-

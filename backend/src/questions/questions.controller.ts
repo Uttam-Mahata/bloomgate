@@ -98,4 +98,3 @@ export class QuestionsController {
     return this.questionsService.generateRandomSelection(criteria);
   }
 }
-

@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { examsApi, Exam } from '@/lib/api';
 import {
   ArrowLeft,
   Printer,
   Download,
   Loader2,
-  FileText,
-  Eye,
 } from 'lucide-react';
 
 interface PdfViewerProps {
@@ -22,11 +20,7 @@ export default function PdfViewer({ examId, onClose }: PdfViewerProps) {
   const [exam, setExam] = useState<Exam | null>(null);
   const [includeAnswers, setIncludeAnswers] = useState(false);
 
-  useEffect(() => {
-    loadPdf();
-  }, [examId, includeAnswers]);
-
-  const loadPdf = async () => {
+  const loadPdf = useCallback(async () => {
     try {
       setLoading(true);
       const data = await examsApi.getPdfContent(examId, includeAnswers);
@@ -37,7 +31,11 @@ export default function PdfViewer({ examId, onClose }: PdfViewerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [examId, includeAnswers]);
+
+  useEffect(() => {
+    loadPdf();
+  }, [loadPdf]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');

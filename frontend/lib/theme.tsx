@@ -16,22 +16,22 @@ const ThemeContext = createContext<ThemeContextType>({
   setTheme: () => {},
 });
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
+// Helper function to get initial theme from localStorage (runs on client)
+function getInitialTheme(): Theme {
+  if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('theme') as Theme | null;
     if (stored) {
-      setThemeState(stored);
+      return stored;
     }
-  }, []);
+  }
+  return 'system';
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(() => getInitialTheme());
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    if (!mounted) return;
-
     const root = document.documentElement;
     
     const getSystemTheme = (): 'light' | 'dark' => {
@@ -55,7 +55,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       applyTheme(theme);
     }
-  }, [theme, mounted]);
+  }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

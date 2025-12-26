@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { examsApi, emailApi, Exam, collegesApi, College } from '@/lib/api';
+import { useEffect, useState, useCallback } from 'react';
+import { examsApi, emailApi, Exam, collegesApi } from '@/lib/api';
 import {
   RefreshCw,
   Pencil,
@@ -15,9 +15,17 @@ import {
   Send,
 } from 'lucide-react';
 
+interface SyncResult {
+  exam: Exam;
+  syncData: {
+    modificationsToSync: { id: string; questionId: string; changeType: string; description: string }[];
+    affectedColleges: string[];
+    filter: { bitArray: number[]; size: number; hashCount: number };
+  };
+}
+
 export default function BloomJoinSync() {
   const [exams, setExams] = useState<Exam[]>([]);
-  const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [showModifyModal, setShowModifyModal] = useState(false);
@@ -27,26 +35,25 @@ export default function BloomJoinSync() {
     description: '',
   });
   const [syncing, setSyncing] = useState(false);
-  const [syncResults, setSyncResults] = useState<any>(null);
+  const [syncResults, setSyncResults] = useState<SyncResult | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
-      const [examsData, collegesData] = await Promise.all([
+      const [examsData] = await Promise.all([
         examsApi.getAll(),
         collegesApi.getAll(),
       ]);
       setExams(examsData.filter((e) => e.status === 'distributed' || e.status === 'modified'));
-      setColleges(collegesData);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleModify = async (e: React.FormEvent) => {
     e.preventDefault();

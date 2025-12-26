@@ -7,12 +7,7 @@ import { BloomFilterModule } from './bloom-filter/bloom-filter.module';
 import { EmailModule } from './email/email.module';
 
 @Module({
-  imports: [
-    QuestionsModule,
-    ExamsModule,
-    BloomFilterModule,
-    EmailModule,
-  ],
+  imports: [QuestionsModule, ExamsModule, BloomFilterModule, EmailModule],
   controllers: [AppController],
   providers: [AppService],
 })
