@@ -1,27 +1,41 @@
 package com.bloomgate.question;
 
-import org.springframework.http.HttpStatus;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Service layer for the Question module.
+ *
+ * <p>All business logic lives here.  Data access is delegated to
+ * {@link QuestionRepository} (entities) and {@link ModificationLogRepository}
+ * (audit trail), keeping the service free of persistence concerns.</p>
+ */
 @Service
 public class QuestionService {
 
-    private final Map<String, Question> questions = new ConcurrentHashMap<>();
-    private final List<ModificationLog> modificationLog = Collections.synchronizedList(new ArrayList<>());
+    private final QuestionRepository questionRepository;
+    private final ModificationLogRepository modificationLogRepository;
 
-    public record ModificationLog(String id, Instant timestamp, String action) {}
-
-    public QuestionService() {
-        seedSampleQuestions();
+    public QuestionService(QuestionRepository questionRepository,
+                           ModificationLogRepository modificationLogRepository) {
+        this.questionRepository = questionRepository;
+        this.modificationLogRepository = modificationLogRepository;
     }
 
-    private void seedSampleQuestions() {
+    // ── Seed sample data on startup ───────────────────────────────────────────
+
+    @PostConstruct
+    @Transactional
+    public void seedSampleQuestions() {
+        if (questionRepository.count() > 0) return;
+
         createQuestion(buildQuestion(
             "What is the time complexity of binary search?",
             QuestionType.MULTIPLE_CHOICE, QuestionComplexity.MEDIUM, 2,
@@ -66,8 +80,7 @@ public class QuestionService {
                 new QuestionOption("1", "True", true),
                 new QuestionOption("2", "False", false)
             ),
-            "True",
-            null
+            "True", null
         ));
 
         createQuestion(buildQuestion(
@@ -75,101 +88,95 @@ public class QuestionService {
             QuestionType.FILL_BLANK, QuestionComplexity.MEDIUM, 2,
             "Computer Science", "Cryptography",
             List.of("hashing", "cryptography"),
-            null,
-            "hashing",
-            null
+            null, "hashing", null
         ));
     }
 
-    private Question buildQuestion(String text, QuestionType type, QuestionComplexity complexity,
-            int weight, String subject, String topic, List<String> tags,
-            List<QuestionOption> options, String answer, String explanation) {
-        Question q = new Question();
-        q.setText(text);
-        q.setType(type);
-        q.setComplexity(complexity);
-        q.setWeight(weight);
-        q.setSubject(subject);
-        q.setTopic(topic);
-        q.setTags(new ArrayList<>(tags));
-        q.setOptions(options);
-        q.setAnswer(answer);
-        q.setExplanation(explanation);
-        return q;
-    }
+    // ── CRUD ──────────────────────────────────────────────────────────────────
 
+    @Transactional
     public Question createQuestion(Question question) {
-        questions.put(question.getId(), question);
-        logModification(question.getId(), "create");
-        return question;
+        Question saved = questionRepository.save(question);
+        log(saved.getId(), "create");
+        return saved;
     }
 
+    @Transactional
     public Question create(Map<String, Object> dto) {
         Question q = new Question();
         applyDto(q, dto);
         return createQuestion(q);
     }
 
-    public List<Question> findAll(String subject, String topic, QuestionComplexity complexity,
-            QuestionType type, List<String> tags, Integer minWeight, Integer maxWeight, Boolean isActive) {
-        return questions.values().stream()
-            .filter(q -> subject == null || q.getSubject().toLowerCase().contains(subject.toLowerCase()))
-            .filter(q -> topic == null || q.getTopic().toLowerCase().contains(topic.toLowerCase()))
+    public List<Question> findAll(String subject, String topic,
+            QuestionComplexity complexity, QuestionType type,
+            List<String> tags, Integer minWeight, Integer maxWeight,
+            Boolean isActive) {
+
+        return questionRepository.findAll().stream()
+            .filter(q -> subject == null || (q.getSubject() != null &&
+                         q.getSubject().toLowerCase().contains(subject.toLowerCase())))
+            .filter(q -> topic == null || (q.getTopic() != null &&
+                         q.getTopic().toLowerCase().contains(topic.toLowerCase())))
             .filter(q -> complexity == null || q.getComplexity() == complexity)
             .filter(q -> type == null || q.getType() == type)
-            .filter(q -> tags == null || tags.isEmpty() || tags.stream().anyMatch(t -> q.getTags().contains(t)))
+            .filter(q -> tags == null || tags.isEmpty() ||
+                         tags.stream().anyMatch(t -> q.getTags().contains(t)))
             .filter(q -> minWeight == null || q.getWeight() >= minWeight)
             .filter(q -> maxWeight == null || q.getWeight() <= maxWeight)
-            .filter(q -> isActive == null || q.isActive() == isActive)
+            .filter(q -> isActive == null || q.getIsActive() == isActive)
             .collect(Collectors.toList());
     }
 
     public Question findOne(String id) {
-        Question q = questions.get(id);
-        if (q == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Question with ID " + id + " not found");
-        }
-        return q;
+        return questionRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Question with ID " + id + " not found"));
     }
 
+    @Transactional
     public Question update(String id, Map<String, Object> dto) {
         Question existing = findOne(id);
         applyDto(existing, dto);
         existing.setUpdatedAt(Instant.now());
         existing.setVersion(existing.getVersion() + 1);
-        questions.put(id, existing);
-        logModification(id, "update");
-        return existing;
+        Question saved = questionRepository.save(existing);
+        log(id, "update");
+        return saved;
     }
 
+    @Transactional
     public void remove(String id) {
-        if (!questions.containsKey(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Question with ID " + id + " not found");
+        if (!questionRepository.existsById(id)) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Question with ID " + id + " not found");
         }
-        questions.remove(id);
-        logModification(id, "delete");
+        questionRepository.deleteById(id);
+        log(id, "delete");
     }
 
+    @Transactional
     public List<Question> bulkImport(List<Map<String, Object>> dtos) {
         return dtos.stream().map(this::create).collect(Collectors.toList());
     }
 
     public List<Question> getByIds(List<String> ids) {
-        return ids.stream()
-            .map(id -> questions.get(id))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+        return questionRepository.findAllById(ids);
     }
+
+    // ── Modification log queries ───────────────────────────────────────────────
 
     public List<String> getModifiedIds(Instant since) {
-        return modificationLog.stream()
-            .filter(l -> since == null || l.timestamp().isAfter(since) || l.timestamp().equals(since))
-            .map(ModificationLog::id)
-            .collect(Collectors.toList());
+        List<ModificationLog> logs = (since == null)
+            ? modificationLogRepository.findAll()
+            : modificationLogRepository.findByTimestampGreaterThanEqual(since);
+        return logs.stream().map(ModificationLog::getQuestionId).collect(Collectors.toList());
     }
 
+    // ── Statistics ────────────────────────────────────────────────────────────
+
     public Map<String, Object> getStatistics() {
-        List<Question> all = new ArrayList<>(questions.values());
+        List<Question> all = questionRepository.findAll();
         Map<String, Integer> byComplexity = new LinkedHashMap<>();
         Map<String, Integer> byType = new LinkedHashMap<>();
         Map<String, Integer> bySubject = new LinkedHashMap<>();
@@ -180,7 +187,8 @@ public class QuestionService {
         for (Question q : all) {
             byComplexity.merge(q.getComplexity().getValue(), 1, Integer::sum);
             byType.merge(q.getType().getValue(), 1, Integer::sum);
-            bySubject.merge(q.getSubject(), 1, Integer::sum);
+            if (q.getSubject() != null)
+                bySubject.merge(q.getSubject(), 1, Integer::sum);
         }
 
         Map<String, Object> stats = new LinkedHashMap<>();
@@ -191,16 +199,18 @@ public class QuestionService {
         return stats;
     }
 
+    // ── Random selection ─────────────────────────────────────────────────────
+
     public List<Question> generateRandomSelection(int count, String subject,
-            List<QuestionComplexity> complexity, List<QuestionType> types, Integer totalWeight) {
+            List<QuestionComplexity> complexity, List<QuestionType> types,
+            Integer totalWeight) {
+
         List<Question> pool = findAll(subject, null, null, null, null, null, null, true);
 
-        if (complexity != null && !complexity.isEmpty()) {
+        if (complexity != null && !complexity.isEmpty())
             pool = pool.stream().filter(q -> complexity.contains(q.getComplexity())).collect(Collectors.toList());
-        }
-        if (types != null && !types.isEmpty()) {
+        if (types != null && !types.isEmpty())
             pool = pool.stream().filter(q -> types.contains(q.getType())).collect(Collectors.toList());
-        }
 
         Collections.shuffle(pool);
 
@@ -220,8 +230,27 @@ public class QuestionService {
         return pool.subList(0, Math.min(count, pool.size()));
     }
 
-    private void logModification(String id, String action) {
-        modificationLog.add(new ModificationLog(id, Instant.now(), action));
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private void log(String questionId, String action) {
+        modificationLogRepository.save(new ModificationLog(questionId, Instant.now(), action));
+    }
+
+    private Question buildQuestion(String text, QuestionType type, QuestionComplexity complexity,
+            int weight, String subject, String topic, List<String> tags,
+            List<QuestionOption> options, String answer, String explanation) {
+        Question q = new Question();
+        q.setText(text);
+        q.setType(type);
+        q.setComplexity(complexity);
+        q.setWeight(weight);
+        q.setSubject(subject);
+        q.setTopic(topic);
+        q.setTags(new ArrayList<>(tags));
+        q.setOptions(options);
+        q.setAnswer(answer);
+        q.setExplanation(explanation);
+        return q;
     }
 
     @SuppressWarnings("unchecked")
@@ -235,12 +264,13 @@ public class QuestionService {
             q.setWeight(((Number) dto.get("weight")).intValue());
         if (dto.containsKey("subject")) q.setSubject((String) dto.get("subject"));
         if (dto.containsKey("topic")) q.setTopic((String) dto.get("topic"));
-        if (dto.containsKey("tags")) q.setTags(dto.get("tags") != null ? (List<String>) dto.get("tags") : new ArrayList<>());
+        if (dto.containsKey("tags"))
+            q.setTags(dto.get("tags") != null ? (List<String>) dto.get("tags") : new ArrayList<>());
         if (dto.containsKey("answer")) q.setAnswer((String) dto.get("answer"));
         if (dto.containsKey("explanation")) q.setExplanation((String) dto.get("explanation"));
         if (dto.containsKey("imageUrl")) q.setImageUrl((String) dto.get("imageUrl"));
         if (dto.containsKey("isActive") && dto.get("isActive") != null)
-            q.setActive((Boolean) dto.get("isActive"));
+            q.setIsActive((Boolean) dto.get("isActive"));
         if (dto.containsKey("options") && dto.get("options") != null) {
             List<Map<String, Object>> optList = (List<Map<String, Object>>) dto.get("options");
             List<QuestionOption> opts = optList.stream().map(o -> {

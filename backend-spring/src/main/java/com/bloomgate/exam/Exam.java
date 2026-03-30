@@ -1,30 +1,91 @@
 package com.bloomgate.exam;
 
+import com.bloomgate.common.ExamDistributionListConverter;
+import com.bloomgate.common.ExamModificationListConverter;
+import com.bloomgate.common.ExamSectionListConverter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * JPA entity representing a complete exam paper.
+ *
+ * <p>Complex nested objects (sections, distributions, modifications) are
+ * stored as JSON strings in dedicated TEXT columns and converted via custom
+ * {@link AttributeConverter} implementations in the {@code common} package.</p>
+ */
+@Entity
+@Table(name = "exams")
 public class Exam {
+
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
     private String id;
+
+    @Column(name = "title", nullable = false)
     private String title;
+
+    @Column(name = "subject", nullable = false)
     private String subject;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "instructions", columnDefinition = "TEXT")
     private String instructions;
+
+    @Column(name = "duration", nullable = false)
     private int duration;
+
+    @Column(name = "total_marks", nullable = false)
     private int totalMarks;
+
+    @Column(name = "passing_marks", nullable = false)
     private int passingMarks;
+
+    /** JSON-serialised list of {@link ExamSection} objects. */
+    @Convert(converter = ExamSectionListConverter.class)
+    @Column(name = "sections", columnDefinition = "TEXT")
     private List<ExamSection> sections;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private ExamStatus status;
+
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "published_at")
     private Instant publishedAt;
+
+    /** JSON-serialised list of {@link ExamDistribution} objects. */
+    @Convert(converter = ExamDistributionListConverter.class)
+    @Column(name = "distributions", columnDefinition = "TEXT")
     private List<ExamDistribution> distributions;
+
+    /** JSON-serialised list of {@link ExamModification} objects. */
+    @Convert(converter = ExamModificationListConverter.class)
+    @Column(name = "modifications", columnDefinition = "TEXT")
     private List<ExamModification> modifications;
+
+    @Column(name = "version", nullable = false)
     private int version;
+
+    @Column(name = "pdf_url")
     private String pdfUrl;
+
+    @Column(name = "answer_key_pdf_url")
     private String answerKeyPdfUrl;
 
     public Exam() {
@@ -39,6 +100,8 @@ public class Exam {
         this.version = 1;
         this.duration = 60;
     }
+
+    // ── Getters & Setters ──────────────────────────────────────────────────────
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -103,19 +166,19 @@ public class Exam {
     public String getAnswerKeyPdfUrl() { return answerKeyPdfUrl; }
     public void setAnswerKeyPdfUrl(String answerKeyPdfUrl) { this.answerKeyPdfUrl = answerKeyPdfUrl; }
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    // ── Domain helpers (excluded from JSON) ───────────────────────────────────
+
+    @JsonIgnore
     public List<String> getAllQuestionIds() {
         return sections.stream()
                 .flatMap(s -> s.getQuestionIds().stream())
                 .collect(Collectors.toList());
     }
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    public String getBloomKey() {
-        return "exam:" + id + ":v" + version;
-    }
+    @JsonIgnore
+    public String getBloomKey() { return "exam:" + id + ":v" + version; }
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore
     public List<String> getModificationIds() {
         return modifications.stream().map(ExamModification::getId).collect(Collectors.toList());
     }

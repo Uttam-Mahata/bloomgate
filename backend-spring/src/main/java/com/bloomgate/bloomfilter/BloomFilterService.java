@@ -3,25 +3,39 @@ package com.bloomgate.bloomfilter;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Service layer for the Bloom Filter module.
+ *
+ * <p>All probabilistic-filter business logic lives here.  Site-level filter
+ * state is persisted through the {@link BloomFilterRepository}, decoupling
+ * the algorithm from its storage mechanism.</p>
+ */
 @Service
 public class BloomFilterService {
 
-    private final Map<String, BloomFilter> siteFilters = new ConcurrentHashMap<>();
+    private final BloomFilterRepository bloomFilterRepository;
+
+    public BloomFilterService(BloomFilterRepository bloomFilterRepository) {
+        this.bloomFilterRepository = bloomFilterRepository;
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * Create and store a bloom filter for a site's modifications
+     * Build a new filter from the supplied modification IDs, persist it for
+     * {@code siteId}, and return the serialised representation.
      */
     public BloomFilterData createModificationFilter(String siteId, List<String> modifiedIds) {
         BloomFilter filter = createFilterFromRecords(modifiedIds);
-        siteFilters.put(siteId, filter);
+        bloomFilterRepository.save(siteId, filter);
         return filter.serialize();
     }
 
     /**
-     * Get records that match the modification filter from another site
+     * Given a previously-persisted filter for {@code siteId}, return only
+     * those local records whose IDs are contained in the filter.
      */
     public <T extends Map<String, Object>> List<T> getMatchingRecords(
             String siteId, List<T> localRecords, BloomFilterData filterData) {
@@ -30,7 +44,9 @@ public class BloomFilterService {
     }
 
     /**
-     * Perform the bloom join to sync modifications
+     * Full BloomJoin: build a filter over {@code modifiedIds}, find matching
+     * records in {@code siteRecords}, compute the diff against
+     * {@code masterRecords}, and return sync-ready data.
      */
     public Map<String, Object> performBloomJoin(
             List<Map<String, Object>> masterRecords,
@@ -51,22 +67,24 @@ public class BloomFilterService {
         return result;
     }
 
-    public BloomFilter createFilterFromRecords(List<String> recordIds) {
+    // ── Package-private helpers (used by ExamService) ─────────────────────────
+
+    BloomFilter createFilterFromRecords(List<String> recordIds) {
         BloomFilter filter = new BloomFilter(1024, 3);
-        if (recordIds != null) {
-            recordIds.forEach(filter::add);
-        }
+        if (recordIds != null) recordIds.forEach(filter::add);
         return filter;
     }
 
-    public <T extends Map<String, Object>> List<T> filterRecords(List<T> records, BloomFilter filter) {
+    <T extends Map<String, Object>> List<T> filterRecords(List<T> records, BloomFilter filter) {
         return records.stream()
                 .filter(r -> {
-                    Object idObj = r.get("id");
-                    return idObj != null && filter.contains(idObj.toString());
+                    Object id = r.get("id");
+                    return id != null && filter.contains(id.toString());
                 })
                 .collect(Collectors.toList());
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private Map<String, Object> computeJoin(
             List<Map<String, Object>> masterRecords,
@@ -76,16 +94,14 @@ public class BloomFilterService {
                 .collect(Collectors.toMap(r -> r.get("id").toString(), r -> r));
 
         List<Map<String, Object>> updated = new ArrayList<>();
-        List<Map<String, Object>> toSync = new ArrayList<>();
+        List<Map<String, Object>> toSync  = new ArrayList<>();
 
         for (Map<String, Object> master : masterRecords) {
             String id = master.get("id").toString();
             Map<String, Object> filtered = filteredMap.get(id);
-            if (filtered != null) {
-                if (!master.equals(filtered)) {
-                    updated.add(master);
-                    toSync.add(master);
-                }
+            if (filtered != null && !master.equals(filtered)) {
+                updated.add(master);
+                toSync.add(master);
             }
         }
 
