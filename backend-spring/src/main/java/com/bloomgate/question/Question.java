@@ -1,30 +1,82 @@
 package com.bloomgate.question;
 
+import com.bloomgate.common.QuestionOptionListConverter;
+import com.bloomgate.common.StringListConverter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * JPA entity representing a single exam question stored in the H2 database.
+ * Complex fields (tags, options) are serialised as JSON strings via custom
+ * {@link AttributeConverter} implementations.
+ */
+@Entity
+@Table(name = "questions")
 public class Question {
+
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
     private String id;
+
+    @Column(name = "text", nullable = false, columnDefinition = "TEXT")
     private String text;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
     private QuestionType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "complexity", nullable = false)
     private QuestionComplexity complexity;
+
+    @Column(name = "weight", nullable = false)
     private int weight;
+
+    @Column(name = "subject")
     private String subject;
+
+    @Column(name = "topic")
     private String topic;
+
+    /** Stored as a JSON array string, e.g. '["search","algorithms"]' */
+    @Convert(converter = StringListConverter.class)
+    @Column(name = "tags", columnDefinition = "TEXT")
     private List<String> tags;
+
+    /** Stored as a JSON array string representing the list of {@link QuestionOption} objects. */
+    @Convert(converter = QuestionOptionListConverter.class)
+    @Column(name = "options", columnDefinition = "TEXT")
     private List<QuestionOption> options;
+
+    @Column(name = "answer", columnDefinition = "TEXT")
     private String answer;
+
+    @Column(name = "explanation", columnDefinition = "TEXT")
     private String explanation;
+
+    @Column(name = "image_url")
     private String imageUrl;
+
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "is_active", nullable = false)
     @JsonProperty("isActive")
     private boolean isActive;
+
+    @Column(name = "version", nullable = false)
     private int version;
 
     public Question() {
@@ -39,6 +91,8 @@ public class Question {
         this.type = QuestionType.SHORT_ANSWER;
         this.complexity = QuestionComplexity.MEDIUM;
     }
+
+    // ── Getters & Setters ──────────────────────────────────────────────────────
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -86,16 +140,15 @@ public class Question {
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 
     @JsonProperty("isActive")
-    public boolean isActive() { return isActive; }
+    public boolean getIsActive() { return isActive; }
 
     @JsonProperty("isActive")
-    public void setActive(boolean active) { isActive = active; }
+    public void setIsActive(boolean isActive) { this.isActive = isActive; }
 
     public int getVersion() { return version; }
     public void setVersion(int version) { this.version = version; }
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    public String getBloomKey() {
-        return id + ":" + version;
-    }
+    @JsonIgnore
+    public String getBloomKey() { return id + ":" + version; }
 }
+
